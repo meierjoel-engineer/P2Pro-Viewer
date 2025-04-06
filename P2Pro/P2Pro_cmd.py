@@ -112,7 +112,7 @@ class P2Pro:
     _dev: usb.core.Device
 
     def __init__(self):
-        self._dev = usb.core.find(idVendor=0x0BDA, idProduct=0x5830)
+        self._dev = usb.core.find(idVendor=0x0BDA, idProduct=0x5840)
         if (self._dev == None):
             raise FileNotFoundError("Infiray P2 Pro thermal module not found, please connect and try again!")
         pass
