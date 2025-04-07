@@ -318,6 +318,7 @@ class P2Pro:
         for i in range(0, 12):
             res = self._long_cmd_read(CmdCode.auto_shutter_params_get, i)
             log.info(PropAutoShutterParams(i).name + ": " + str(res[0]) + " " + str(res[1]));
+            print(PropAutoShutterParams(i).name + ": " + str(res[0]) + " " + str(res[1]));
     
     def shutter_background(self):
         log.info("Shutter background")

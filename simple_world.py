@@ -9,19 +9,7 @@ def open_camera():
         return
     
     cam_cmd = P2Pro_CMD.P2Pro()
-    time.sleep(1)
     cam_cmd.pseudo_color_set(0, P2Pro_CMD.PseudoColorTypes.PSEUDO_BLACK_HOT)
-    time.sleep(1)
-
-    
-
-    
-
-    time.sleep(1)
-
-    
-
-
 
     prev_toggle = None
     start_time = time.time()
@@ -29,7 +17,7 @@ def open_camera():
         while True:
             ret, frame = cap.read()
             height = frame.shape[0]
-            top_half = frame[:height // 2, :]
+            # top_half = frame[:height // 2, :]
             _, disabled = cam_cmd.get_shutter_state()
 
             diff = time.time() - start_time
@@ -38,20 +26,14 @@ def open_camera():
             # Only if the state has changed, update the shutter.
             if prev_toggle is None or toggle_state != prev_toggle:
                 if toggle_state:
-                    res = cam_cmd.auto_shutter_disable()
-                    print(f"Shutter state: {res}")
-                    # cam_cmd.ooc_b_update(P2Pro_CMD.OocBUpdateTypes.B_UPDATE)
-                    print("Shutter set to DISABLED")
+                    cam_cmd.auto_shutter_disable()
                 else:
-                    res = cam_cmd.auto_shutter_enable()
-                    print(f"Shutter state: {res}")
-                    # cam_cmd.ooc_b_update(P2Pro_CMD.OocBUpdateTypes.B_UPDATE)
-                    print("Shutter set to ENABLED")
+                    cam_cmd.auto_shutter_enable()
                 prev_toggle = toggle_state
 
             # _,en = cam_cmd.shutter_sta_get()
             # print(f"Shutter state: {en}")
-            cv2.imshow("Camera", top_half)
+            cv2.imshow("Camera", frame)
             cv2.waitKey(1)
 
     except KeyboardInterrupt:
