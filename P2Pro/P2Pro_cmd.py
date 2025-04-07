@@ -191,7 +191,7 @@ class P2Pro:
             d += struct.pack(">I2x", cmd_param)
             log.debug(f's_cmd_w {0x1d00:#x} ({len(d):2}) {d.hex()}')
             self._dev.ctrl_transfer(0x41, 0x45, 0x78, 0x1d00, d)
-            self._block_until_camera_ready()
+            # self._block_until_camera_ready()
             return
 
         outer_chunk_size = 0x100
@@ -259,7 +259,7 @@ class P2Pro:
             initial_data += struct.pack(">IH", cmd_param + i, to_read)
             log.debug(f's_cmd_r {0x1d00:#x} ({len(initial_data):2}) {initial_data.hex()}')
             self._dev.ctrl_transfer(0x41, 0x45, 0x78, 0x1d00, initial_data)
-            self._block_until_camera_ready()
+            # self._block_until_camera_ready()
 
             # read request (USB: 0xC1, 0x44)
             log.debug(f's_cmd_r {0x1d08:#x} ({to_read:2}) ...')
@@ -301,7 +301,17 @@ class P2Pro:
         # use this at your own risk
         # ====================================================================
         # the next line is an example on how to deactivate auto shutter update
-        #res = self._long_cmd_write(CmdCode.auto_shutter_params_set, PropAutoShutterParams.SHUTTER_PROP_SWITCH, 0)
+        # res = self._long_cmd_write(CmdCode.auto_shutter_params_set, PropAutoShutterParams.SHUTTER_PROP_SWITCH, 0)
+    
+    def auto_shutter_disable(self):
+        log.info("Auto shutter disable")
+        res = self._long_cmd_write(CmdCode.auto_shutter_params_set, PropAutoShutterParams.SHUTTER_PROP_SWITCH, 0)
+        return res
+    
+    def auto_shutter_enable(self):
+        log.info("Auto shutter enable")
+        res = self._long_cmd_write(CmdCode.auto_shutter_params_set, PropAutoShutterParams.SHUTTER_PROP_SWITCH, 1)
+        return res
     
     def shutter_params_print(self):
         log.info("Shutter parameters")
