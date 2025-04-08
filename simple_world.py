@@ -9,6 +9,8 @@ def open_camera():
         return
     
     cam_cmd = P2Pro_CMD.P2Pro()
+
+
     time.sleep(1)  # Allow time for camera to initialize
     cam_cmd.pseudo_color_set(0, P2Pro_CMD.PseudoColorTypes.PSEUDO_BLACK_HOT)
 

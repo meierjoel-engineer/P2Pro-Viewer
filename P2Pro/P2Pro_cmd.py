@@ -111,11 +111,22 @@ class CmdCode(enum.IntEnum):
 class P2Pro:
     _dev: usb.core.Device
 
-    def __init__(self):
-        self._dev = usb.core.find(idVendor=0x0BDA, idProduct=0x5840)
-        if (self._dev == None):
-            raise FileNotFoundError("Infiray P2 Pro thermal module not found, please connect and try again!")
-        pass
+    def __init__(self, device_idx=0):
+        """
+        Initialize P2Pro command interface with camera selection
+        
+        Parameters:
+            device_idx: Camera index (0 for first camera, 1 for second, etc.)
+                    Similar to cv2.VideoCapture(index, cv2.CAP_DSHOW)
+        """
+        # Find all P2Pro devices connected to the system
+        all_devices = list(usb.core.find(find_all=True, idVendor=0x0BDA, idProduct=0x5840))
+        
+        if not all_devices:
+            raise FileNotFoundError("No Infiray P2 Pro thermal modules found")
+        
+        log.info(f"Found {len(all_devices)} P2 Pro thermal modules")
+        
 
     def _check_camera_ready(self) -> bool:
         """
