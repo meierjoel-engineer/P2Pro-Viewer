@@ -111,14 +111,26 @@ class CmdCode(enum.IntEnum):
 class P2Pro:
     _dev: usb.core.Device
 
-    def __init__(self, device_idx=0):
+    def __init__(self, device_idx=0, camera_id=None):
         """
         Initialize P2Pro command interface with camera selection
         
         Parameters:
             device_idx: Camera index (0 for first camera, 1 for second, etc.)
-                    Similar to cv2.VideoCapture(index, cv2.CAP_DSHOW)
+                        Similar to cv2.VideoCapture(index, cv2.CAP_DSHOW)
+            camera_id: Optional camera identifier ('camera1', 'camera2') 
+                    Takes precedence over device_idx if provided
         """
+        # If camera_id is provided, find its corresponding index
+        if camera_id is not None:
+            # Find all cameras and their identifiers
+            camera_map = self._find_camera_mapping()
+            if camera_id in camera_map:
+                device_idx = camera_map[camera_id]
+                log.info(f"Using {camera_id} at index {device_idx}")
+            else:
+                log.warning(f"Camera ID '{camera_id}' not found, falling back to index {device_idx}")
+        
         # Find all P2Pro devices connected to the system
         all_devices = list(usb.core.find(find_all=True, idVendor=0x0BDA, idProduct=0x5840))
         
@@ -127,6 +139,67 @@ class P2Pro:
         
         log.info(f"Found {len(all_devices)} P2 Pro thermal modules")
         
+        # Check if device_idx is valid
+        if device_idx >= len(all_devices):
+            raise ValueError(f"Device index {device_idx} out of range, only {len(all_devices)} devices found")
+        
+        # Select the appropriate device
+        self._dev = all_devices[device_idx]
+        
+        # Claim the interface
+        if self._dev.is_kernel_driver_active(0):
+            try:
+                self._dev.detach_kernel_driver(0)
+            except Exception as e:
+                log.warning(f"Could not detach kernel driver: {e}")
+        
+        try:
+            usb.util.claim_interface(self._dev, 0)
+        except Exception as e:
+            log.warning(f"Could not claim interface: {e}")
+
+    def _find_camera_mapping(self):
+        """Find mapping between camera identifiers and indices"""
+        import wmi
+        
+        # Create mapping dictionary
+        camera_to_index = {}
+        
+        try:
+            # Find thermal cameras
+            c = wmi.WMI()
+            usb_devices = c.Win32_USBControllerDevice()
+            thermal_cameras = []
+            
+            # Identify thermal cameras
+            for device in usb_devices:
+                dependent = device.Dependent
+                if dependent:
+                    device_id = dependent.DeviceID
+                    if "VID_0BDA" in device_id and "PID_5840" in device_id:
+                        # This is our thermal camera - now determine which one
+                        camera_info = {"id": device_id}
+                        
+                        # Extract serial or port identifier to distinguish cameras
+                        if "200901010001" in device_id:
+                            camera_info["identifier"] = "camera1"
+                        elif "5&13A74B18&0&11" in device_id:
+                            camera_info["identifier"] = "camera2"
+                        else:
+                            camera_info["identifier"] = f"camera{len(thermal_cameras)+1}"
+                        
+                        # Only add devices that represent the main USB interface
+                        if not "MI_" in device_id:
+                            thermal_cameras.append(camera_info)
+            
+            # Create mapping (first camera found = index 0, second = index 1, etc.)
+            for i, cam in enumerate(thermal_cameras):
+                camera_to_index[cam['identifier']] = i
+                
+        except Exception as e:
+            log.warning(f"Error finding camera mapping: {e}")
+        
+        return camera_to_index
 
     def _check_camera_ready(self) -> bool:
         """
