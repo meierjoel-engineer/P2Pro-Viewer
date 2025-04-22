@@ -1,8 +1,6 @@
 import cv2
-import P2Pro.P2Pro_cmd as P2Pro_CMD
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 import threading
 import queue
 import hashlib
